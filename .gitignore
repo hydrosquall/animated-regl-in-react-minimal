@@ -1,2 +1,7 @@
+# Deps
 node_modules/
+
+
+# Build artifacts
+build/
 yarn-error.log

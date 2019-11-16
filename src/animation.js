@@ -1,8 +1,9 @@
-// Organizing an existing regl progrm
+// Organizing an existing regl program
 // https://github.com/rreusser/smoothly-animating-points-with-regl
 import { phyllotaxis, grid, sine, spiral } from "./datasets";
+// import controlPanel from 'control-panel';
+import fragShader from "./fragShader.glsl";
 
-const glsl = require("glslify");
 const linspace = require("ndarray-linspace");
 const vectorFill = require("ndarray-vector-fill");
 const ndarray = require("ndarray");
@@ -11,7 +12,7 @@ const ease = require("eases/cubic-in-out");
 const switchInterval = 2;
 const switchDuration = 1;
 
-export function run(regl) {
+export async function run(regl) {
   let n = 100000;
   let datasets = [];
   let colorBasis;
@@ -35,33 +36,33 @@ export function run(regl) {
   createDatasets();
 
   // Create nice controls:
-  require("control-panel")(
-    [
-      {
-        type: "range",
-        min: 1,
-        max: 10,
-        label: "radius",
-        initial: pointRadius,
-        step: 0.25
-      },
-      {
-        type: "range",
-        min: 1000,
-        max: 200000,
-        label: "n",
-        initial: n,
-        step: 1000
-      }
-    ],
-    { width: 400 }
-  ).on("input", data => {
-    pointRadius = data.radius;
-    if (data.n !== n) {
-      n = Math.round(data.n);
-      createDatasets();
-    }
-  });
+  // controlPanel(
+  //   [
+  //     {
+  //       type: "range",
+  //       min: 1,
+  //       max: 10,
+  //       label: "radius",
+  //       initial: pointRadius,
+  //       step: 0.25
+  //     },
+  //     {
+  //       type: "range",
+  //       min: 1000,
+  //       max: 200000,
+  //       label: "n",
+  //       initial: n,
+  //       step: 1000
+  //     }
+  //   ],
+  //   { width: 400 }
+  // ).on("input", data => {
+  //   pointRadius = data.radius;
+  //   if (data.n !== n) {
+  //     n = Math.round(data.n);
+  //     createDatasets();
+  //   }
+  // });
 
   const drawPoints = regl({
     vert: `
@@ -79,25 +80,7 @@ export function run(regl) {
         gl_PointSize = radius;
       }
     `,
-    frag: glsl(`
-      #ifdef GL_ES
-      precision mediump float;
-      #endif
-
-      varying float t;
-      // #pragma glslify: colormap = require(glsl-colormap/viridis)
-
-      // https://thebookofshaders.com/06/
-      vec3 colorA = vec3(0.149,0.141,0.912);
-      vec3 colorB = vec3(0.000,0.833,0.224);
-
-      void main () {
-        float pct = abs(sin(t));
-        vec3 color = mix(colorA, colorB, pct);
-        // gl_FragColor = colormap(t);
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `),
+    frag: fragShader,
     depth: { enable: false },
     attributes: {
       // Pass two buffers between which we ease in the vertex shader:
