@@ -6,7 +6,6 @@ const predicate = valueToTest => {
 };
 
 
-
 // In future, deal with case where rules happens more than once.
 // this works ONLY if the "ONEOF key" isn't intercepting your file in the CRA config
 // const transform = match => ({
@@ -49,6 +48,9 @@ function rescriptGlslifyPlugin() {
   };
 }
 
+
+// Adding new loaders to webpack
+// https://github.com/harrysolovay/rescripts/issues/5
 module.exports = [
   [
     rescriptGlslifyPlugin,

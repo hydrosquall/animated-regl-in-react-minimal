@@ -1,8 +1,8 @@
 // Organizing an existing regl program
 // https://github.com/rreusser/smoothly-animating-points-with-regl
 import { phyllotaxis, grid, sine, spiral } from "./datasets";
-import controlPanel from 'control-panel';
-import fragShader from "./fragShader.glsl";
+import shaderFrag from "./shaderFrag.glsl";
+import shaderVertex from "./shaderVertex.glsl";
 
 import ControlsState from 'controls-state';
 import ControlsGui from 'controls-gui';
@@ -14,7 +14,9 @@ const ease = require("eases/cubic-in-out");
 
 const switchInterval = 2;
 const switchDuration = 1;
+const DEFAULT_POINTS = 20000;
 
+// From RReusser ObservableHQ notebook
 function wrapGUI(state, opts) {
   const root = document.createElement("div");
   const gui = ControlsGui(
@@ -30,13 +32,12 @@ function wrapGUI(state, opts) {
       },
       opts || {}
     )
-  ).$field.onChanges(e => root.dispatchEvent(new CustomEvent("input")));
-  root.value = state;
+  );
   return root;
 }
 
+// Fixed REGL context to persist over lifetime...
 export function run(regl) {
-
   let datasets = [];
   let colorBasis;
   let datasetPtr = 0;
@@ -56,17 +57,17 @@ export function run(regl) {
   };
 
   // Initialize:
-  createDatasets(100000); // default
-  regl.n = 100000;
+  regl.n = DEFAULT_POINTS; // TODO: what's the proper way to shuffle state between handlers and REGL? Seems like we'd want to hoist this out to props.
+  createDatasets(regl.n); // default
 
-  // Create nice controls:
+  // Initialize controls?
   const state = ControlsState({
     instructions: ControlsState.Raw(h =>
       h(
         // PREACT
         "p",
         null,
-        `POC to show running smoothly-animating-points-with-regl in CRA`
+        `POC of smoothly-animating-points-with-regl in create-react-app`
       )
     ),
     // name: "controls-state + controls-gui Prototype", // text input!
@@ -76,8 +77,8 @@ export function run(regl) {
       // method: ControlsState.Select("RK2", {      // make an enum!
       //   options: ["Euler", "RK2", "RK4", "RK45"]
       // }),
-      radius: ControlsState.Slider(10, { min: 1, max: 10, step: 0.25 }),
-      n_points: ControlsState.Slider(50000, {
+      radius: ControlsState.Slider(1, { min: 1, max: 10, step: 0.25 }),
+      n_points: ControlsState.Slider(DEFAULT_POINTS, {
         min: 1000,
         max: 200000,
         step: 1000
@@ -96,27 +97,13 @@ export function run(regl) {
     }
   });
 
-  // This is a bit hacky, in future work with a DOM ref.
+  // In future, pass in a reference to "run" directly instead.
   const gui = wrapGUI(state ,{});
   document.body.appendChild(gui);
 
   const drawPoints = regl({
-    vert: `
-      precision mediump float;
-      attribute vec2 xy0, xy1;
-      attribute float basis;
-      varying float t;
-      uniform float aspect, interp, radius;
-
-      void main () {
-        t = basis;
-        // Interpolate between the two positions:
-        vec2 pos = mix(xy0, xy1, interp);
-        gl_Position = vec4(pos.x, pos.y * aspect, 0, 1);
-        gl_PointSize = radius;
-      }
-    `,
-    frag: fragShader,
+    vert: shaderVertex,
+    frag: shaderFrag,
     depth: { enable: false },
     attributes: {
       // Pass two buffers between which we ease in the vertex shader:
