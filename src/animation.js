@@ -1,8 +1,11 @@
 // Organizing an existing regl program
 // https://github.com/rreusser/smoothly-animating-points-with-regl
 import { phyllotaxis, grid, sine, spiral } from "./datasets";
-// import controlPanel from 'control-panel';
+import controlPanel from 'control-panel';
 import fragShader from "./fragShader.glsl";
+
+import ControlsState from 'controls-state';
+import ControlsGui from 'controls-gui';
 
 const linspace = require("ndarray-linspace");
 const vectorFill = require("ndarray-vector-fill");
@@ -12,8 +15,28 @@ const ease = require("eases/cubic-in-out");
 const switchInterval = 2;
 const switchDuration = 1;
 
-export async function run(regl) {
-  let n = 100000;
+function wrapGUI(state, opts) {
+  const root = document.createElement("div");
+  const gui = ControlsGui(
+    state,
+    Object.assign(
+      {
+        root: root,
+        containerCSS: "max-width:350px;padding:30px 0;",
+        theme: Object.assign({}, (opts || {}).theme, {
+          fontFamily: "'Helvetica', sans-serif",
+          fontSize: "13px"
+        })
+      },
+      opts || {}
+    )
+  ).$field.onChanges(e => root.dispatchEvent(new CustomEvent("input")));
+  root.value = state;
+  return root;
+}
+
+export function run(regl) {
+
   let datasets = [];
   let colorBasis;
   let datasetPtr = 0;
@@ -21,7 +44,7 @@ export async function run(regl) {
   let pointRadius = 3;
   let lastSwitchTime = 0;
 
-  const createDatasets = () => {
+  const createDatasets = (n) => {
     // This is a cute little pattern that *either* creates a buffer or updates
     // the existing buffer since both the constructor and the current instance
     // can be called as a function.
@@ -33,36 +56,49 @@ export async function run(regl) {
   };
 
   // Initialize:
-  createDatasets();
+  createDatasets(100000); // default
+  regl.n = 100000;
 
   // Create nice controls:
-  // controlPanel(
-  //   [
-  //     {
-  //       type: "range",
-  //       min: 1,
-  //       max: 10,
-  //       label: "radius",
-  //       initial: pointRadius,
-  //       step: 0.25
-  //     },
-  //     {
-  //       type: "range",
-  //       min: 1000,
-  //       max: 200000,
-  //       label: "n",
-  //       initial: n,
-  //       step: 1000
-  //     }
-  //   ],
-  //   { width: 400 }
-  // ).on("input", data => {
-  //   pointRadius = data.radius;
-  //   if (data.n !== n) {
-  //     n = Math.round(data.n);
-  //     createDatasets();
-  //   }
-  // });
+  const state = ControlsState({
+    instructions: ControlsState.Raw(h =>
+      h(
+        // PREACT
+        "p",
+        null,
+        `POC to show running smoothly-animating-points-with-regl in CRA`
+      )
+    ),
+    // name: "controls-state + controls-gui Prototype", // text input!
+    // color: "#4499ff", // infers colors
+    // "say hi": () => console.log("Hello!"), // can trigger actions!
+    simulation: {
+      // method: ControlsState.Select("RK2", {      // make an enum!
+      //   options: ["Euler", "RK2", "RK4", "RK45"]
+      // }),
+      radius: ControlsState.Slider(10, { min: 1, max: 10, step: 0.25 }),
+      n_points: ControlsState.Slider(50000, {
+        min: 1000,
+        max: 200000,
+        step: 1000
+      })
+      // running: false, // infers boolean
+      // shape: { width: 640, height: 480 } // infers number toggles
+    }
+  }).$field.onChanges(data => {
+    if (data["simulation.radius"]) {
+      pointRadius = data["simulation.radius"].value;
+    }
+    if (data["simulation.n_points"]) {
+      const n = Math.round(data["simulation.n_points"].value);
+      regl.n = n;
+      createDatasets(n);
+    }
+  });
+
+  // This is a bit hacky, in future work with a DOM ref.
+  const gui = wrapGUI(state ,{});
+  document.body.appendChild(gui);
 
   const drawPoints = regl({
     vert: `
@@ -95,7 +131,7 @@ export async function run(regl) {
       interp: (ctx, props) => Math.max(0, Math.min(1, props.interp))
     },
     primitive: "point",
-    count: () => n
+    count: () => regl.n
   });
 
   regl.frame(({ time }) => {
@@ -107,5 +143,7 @@ export async function run(regl) {
     }
     drawPoints({ interp: ease((time - lastSwitchTime) / switchDuration) });
   });
+
+
   console.log("Completed setup");
 }
