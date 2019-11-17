@@ -5,6 +5,7 @@ import reglCreator from "regl";
 
 import { Renderer } from "./animation";
 import { ControlPanel } from "./ControlPanel";
+import { DataManager } from "./DataManager";
 import { getReducer } from './reducer';
 
 import "./styles.css";
@@ -34,7 +35,7 @@ const App = () => {
       attributes: { antialias: true },
       onDone: (err, regl) => {
         dispatch({
-          type: "setRegl",
+          type: "setReglInstance",
           payload: { regl }
         });
       }
@@ -43,19 +44,23 @@ const App = () => {
 
   return (
     <div className="App">
-      {/*
-          I think Regl needs to be instantiated above the renderer so that the dataloader can help
-          with putting things into an REGL buffer. However, let's discuss this API with someone else first.
-          I also think based on this experiment that we could consider moving the color scale into WEBGL if all the palettes were made into pragmas...
-      */}
-      {reglRef.current && (
-        <Renderer
-          regl={reglRef.current}
-          numPoints={state.numPoints}
-          // colorBasis={state.colorBasis}
-          // datasets={state.datasets}
-          radius={radius}
-        ></Renderer>
+      {state.reglInstance && (
+        <>
+          <Renderer
+            regl={state.reglInstance}
+            numPoints={state.numPoints}
+            colorBasis={state.colorBasis}
+            datasets={state.datasets}
+            radius={radius}
+          ></Renderer>
+          <DataManager
+            dispatch={dispatch} // Keep this generic for now, but if narrowed in the future, limit to 1 callback per slider.
+            numPoints={state.numPoints}
+            regl={state.reglInstance}
+            datasets={state.datasets}
+            colorBasis={state.colorBasis}
+          ></DataManager>
+        </>
       )}
       {/* Put this ref on the outside so we can control the ordering relative to the other control panels (underlay/overlay) */}
       <div ref={canvasRef} className="reglWrapper"></div>

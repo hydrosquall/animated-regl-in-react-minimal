@@ -1,9 +1,4 @@
 
-import linspace from "ndarray-linspace";
-import vectorFill from "ndarray-vector-fill";
-import ndarray from "ndarray";
-
-import { phyllotaxis, grid, sine, spiral } from "./datasets";
 
 // Reducer needs access to REGL insttance to be able to load data into a buffer, without the caller needing to know about REGL.
 // Otherwise data processing logic will leak into the renderer.
@@ -13,18 +8,26 @@ export function getReducer(regl) {
     switch (action.type) {
       case "setNumPoints":
         const { n } = action.payload; // n = number of points, regl is a regl instance
-
         return {
           ...state,
-          // datasets,
-          // colorBasis,
           numPoints: n
         };
-      case "setRegl":
+      case "setDatasetsAndColorBasis":
+        // BUFFERS need to be same copies every time:
+        const { colorBasis, datasets } = action.payload; // n = number of points, regl is a regl instance
+        if (state.colorBasis) {
+          return state;
+        }
         return {
           ...state,
-          regl: action.payload.regl
-        }
+          colorBasis,
+          datasets
+        };
+      case "setReglInstance":
+        return {
+          ...state,
+          reglInstance: action.payload.regl
+        };
 
       default:
         throw new Error();
