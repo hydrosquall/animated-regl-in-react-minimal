@@ -30,4 +30,38 @@ function spiral(n) {
   };
 }
 
-export { phyllotaxis, grid, sine, spiral };
+// random variations
+function mutation(n) {
+  return function(i) {
+    let t = Math.sqrt(i / (n - 1));
+    return [t * Math.sin(t * Math.PI * 40), t * Math.tan(t * Math.PI * 40)];
+  };
+}
+
+function mutation2(n) {
+  return function(i) {
+    let t = Math.sqrt(i / (n - 1));
+    return [t * Math.tan(t * Math.PI * 40), t * Math.sin(t * Math.PI * 40)];
+  };
+}
+
+function mutation3(n) {
+  return function(i) {
+    let t = Math.sqrt(i / (n - 1));
+    return [t * Math.tan(t * Math.PI * 20), t * Math.sin(t * Math.PI * 20)];
+  };
+}
+
+function mutation4(n) {
+  return function(i) {
+    let t = Math.exp(i / (n - 1));
+    return [t * Math.tan(t * Math.PI * 20), t * Math.sin(t * Math.PI * 20)];
+  };
+}
+
+
+
+export { phyllotaxis, grid, sine, spiral }; // if you need them individually
+// const drawFunctions = [phyllotaxis, grid, sine, spiral];
+const drawFunctions = [mutation, phyllotaxis,  mutation2, mutation3, spiral, ];
+export default drawFunctions;
