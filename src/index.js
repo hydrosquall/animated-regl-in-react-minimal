@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useReducer } from "react";
 import ReactDOM from "react-dom";
 
 import reglCreator from "regl";
+import reglCamera from "regl-camera";
 
 import { Renderer } from "./animation";
 import { ControlPanel } from "./ControlPanel";
@@ -14,8 +15,9 @@ const DEFAULT_POINTS = 20000;
 const DEFAULT_STATE = {
   numPoints: DEFAULT_POINTS,
   datasets: [],
-  colorBasis: undefined,
-  reglInstance: null // shared
+  colorBasis: null,
+  reglInstance: null, // shared
+  camera: null
 };
 
 const App = () => {
@@ -33,9 +35,15 @@ const App = () => {
       container: canvasRef.current,
       attributes: { antialias: true },
       onDone: (err, regl) => {
+
+        const camera = reglCamera(regl, {
+          center: [0, 0, 0],
+          theta: Math.PI / 2
+        })
+
         dispatch({
           type: "setRegl",
-          payload: { regl }
+          payload: { regl, camera }
         });
       }
     });
@@ -51,9 +59,8 @@ const App = () => {
       {reglRef.current && (
         <Renderer
           regl={reglRef.current}
+          camera={state.camera}
           numPoints={state.numPoints}
-          // colorBasis={state.colorBasis}
-          // datasets={state.datasets}
           radius={radius}
         ></Renderer>
       )}

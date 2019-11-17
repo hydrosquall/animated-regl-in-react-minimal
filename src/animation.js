@@ -6,7 +6,7 @@ import linspace from "ndarray-linspace";
 import vectorFill from "ndarray-vector-fill";
 import ndarray from "ndarray";
 
-import { phyllotaxis, grid, sine, spiral } from "./datasets";
+import drawFunctions from "./datasets";
 
 import shaderFrag from "./shaderFrag.glsl";
 import shaderVertex from "./shaderVertex.glsl";
@@ -72,15 +72,18 @@ export class Renderer extends Component {
       return;
     }
 
-    this.drawPoints({
-      // external state
-      pointRadius: this.props.radius,
-      n: this.props.numPoints,
-      datasets: this.datasets,
-      colorBasis: this.colorBasis,
-      // derived state
-      datasetPtr: this.datasetPtr,
-      interp: ease((time - this.lastSwitchTime) / switchDuration)
+    this.props.camera(state => {
+      // if (!state.dirty) return;
+      this.drawPoints({
+        // external state
+        pointRadius: this.props.radius,
+        n: this.props.numPoints,
+        datasets: this.datasets,
+        colorBasis: this.colorBasis,
+        // derived state
+        datasetPtr: this.datasetPtr,
+        interp: ease((time - this.lastSwitchTime) / switchDuration)
+      });
     });
   };
 
@@ -109,7 +112,7 @@ export class Renderer extends Component {
   componentDidUpdate(prevProps) {
     if (prevProps.numPoints !== this.props.numPoints) {
       const n = this.props.numPoints;
-      this.datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
+      this.datasets = drawFunctions.map((func, i) =>
         (this.datasets[i] || this.regl.buffer)(
           vectorFill(ndarray([], [n, 2]), func(n))
         )

@@ -5,7 +5,7 @@ import ndarray from "ndarray";
 
 import { phyllotaxis, grid, sine, spiral } from "./datasets";
 
-// Reducer needs access to REGL insttance to be able to load data into a buffer, without the caller needing to know about REGL.
+// Reducer needs access to REGL instance to be able to load data into a buffer, without the caller needing to know about REGL.
 // Otherwise data processing logic will leak into the renderer.
 // Alternately, we can store the regl instance in redux!
 export function getReducer(regl) {
@@ -16,14 +16,13 @@ export function getReducer(regl) {
 
         return {
           ...state,
-          // datasets,
-          // colorBasis,
           numPoints: n
         };
       case "setRegl":
         return {
           ...state,
-          regl: action.payload.regl
+          regl: action.payload.regl,
+          camera: action.payload.camera
         }
 
       default:

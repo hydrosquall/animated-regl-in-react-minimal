@@ -30,4 +30,6 @@ function spiral(n) {
   };
 }
 
-export { phyllotaxis, grid, sine, spiral };
+export { phyllotaxis, grid, sine, spiral }; // if you need them individually
+const drawFunctions = [phyllotaxis, grid, sine, spiral];
+export default drawFunctions;
