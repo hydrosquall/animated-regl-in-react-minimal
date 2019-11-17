@@ -1,8 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import ReactDOM from "react-dom";
 
 import ControlsState from "controls-state";
 import ControlsGui from "controls-gui";
+import reglCreator from "regl";
+
+import linspace from "ndarray-linspace";
+import vectorFill from "ndarray-vector-fill";
+import ndarray from "ndarray";
+
+import { phyllotaxis, grid, sine, spiral } from "./datasets";
 import { Renderer } from "./animation";
 
 import "./styles.css";
@@ -29,27 +36,52 @@ function wrapGUI(state, opts) {
   return root;
 };
 
-const DEFAULT_POINTS = 20000;
-
-const reglCreator = require("regl");
-
 const App = () => {
   const canvasRef = useRef(null);
-  const reglRef = useRef(null);
+  const reglRef = useRef(null); // for some reason setState isn't good, maybe usecallback is better? this ref is ok for now.
 
-  // In future, make reducer for all these points
-  const [numPoints, setNumPoints] = useState(DEFAULT_POINTS);
+  // In future, make reducer to store all of this state.
   const [radius, setRadius ] = useState(2);
-  const [regl, setRegl ] = useState(null);
+  const [datasetState, setState] = useState({ numPoints: DEFAULT_POINTS, datasets: [], colorBasis: undefined }); // all this state is coupled.
+
+  // The reason for putting the dom NEXT to the renderer instead of putting them together is so that the "update data"
+  // method would get access to the "regl" buffer. However, I'm not sure if that's necessary... try to clean it up tomorrow.
+  const updateData = useCallback(
+    (state, n, regl) => {
+        // This pattern *either* creates a buffer or updates the existing buffer
+        const datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
+          (state.datasets[i] || regl.buffer)(
+            vectorFill(ndarray([], [n, 2]), func(n))
+          )
+        );
+      // A list from 1 to 0 for coloring:
+      const colorBasis = (state.colorBasis || regl.buffer)(
+        linspace(ndarray([], [n]), 1, 0)
+      );
+      setState({
+        datasets,
+        colorBasis,
+        numPoints: n
+      });
+    },
+    []
+  );
 
   useEffect(() => {
-    const onDone = (err, regl) => setRegl("foo"); // TODO: why calling setRegl on regl creates an error, I don't know. Use this workaround for now.
-    reglRef.current = reglCreator({ container: canvasRef.current, onDone, attributes: { antialias: true }});
+    reglRef.current = reglCreator({ container: canvasRef.current, attributes: { antialias: true }});
+    // console.log(reglRef.current);
+    // Render initial batch of data
+    updateData(
+      datasetState,
+      datasetState.numPoints,
+      reglRef.current
+    );
   }, []);
 
   // Wire up a GUI tester
+  // TODO: Split "controls" into a separate component so it can be independent of the main renderer app
   useEffect(() => {
-    const state = ControlsState({
+    const controlState = ControlsState({
       instructions: ControlsState.Raw(h =>
         h(
           // PREACT
@@ -80,12 +112,12 @@ const App = () => {
       }
       if (data["simulation.n_points"]) {
         const n = Math.round(data["simulation.n_points"].value);
-        setNumPoints(n);
+        updateData(datasetState, n, reglRef.current);
       }
     });
 
     // // In future, pass in a reference to "run" directly instead.
-    const gui = wrapGUI(state, {});
+    const gui = wrapGUI(controlState, {});
     document.body.appendChild(gui);
   }, [])
 
@@ -94,7 +126,9 @@ const App = () => {
       {reglRef.current && (
         <Renderer
           regl={reglRef.current}
-          numPoints={numPoints}
+          numPoints={datasetState.numPoints}
+          colorBasis={datasetState.colorBasis}
+          datasets={datasetState.datasets}
           radius={radius}
         ></Renderer>
       )}

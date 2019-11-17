@@ -1,14 +1,11 @@
 // Organizing an existing regl program
 // https://github.com/rreusser/smoothly-animating-points-with-regl
-import React, { Component } from 'react';
+import { Component } from 'react';
 
-import { phyllotaxis, grid, sine, spiral } from "./datasets";
 import shaderFrag from "./shaderFrag.glsl";
 import shaderVertex from "./shaderVertex.glsl";
 
-const linspace = require("ndarray-linspace");
-const vectorFill = require("ndarray-vector-fill");
-const ndarray = require("ndarray");
+
 const ease = require("eases/cubic-in-out");
 
 const switchInterval = 2;
@@ -46,40 +43,20 @@ export class Renderer extends Component {
   constructor(props) {
     super(props);
     if (!props.regl) {
-      throw Error("Easy there! REGL is not ready yet.");
+      throw Error("Easy there! REGL is not ready to use yet.");
     }
     this.regl = props.regl;
     this.initDrawFunctions();
     this._start();
 
-    // Local state which will be driven from the outside
-    // arguably these could be props...
+    // Local state dealing with animation, not data.
     this.lastSwitchTime = 0;
     this.datasetPtr = 0;
-    this.datasets = [];
-
-    // Generate initial data...
-    this.createDatasets(props.numPoints);
   }
 
+  // Might be able to remove this ini
   initDrawFunctions() {
     this.drawPoints = getDrawPoints(this);
-  }
-
-  createDatasets = (n) => {
-    // This pattern *either* creates a buffer or updates
-    // the existing buffer
-    this.datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
-      (this.datasets[i] || this.regl.buffer)(vectorFill(ndarray([], [n, 2]), func(n)))
-    );
-    // A list from 1 to 0 for coloring:
-    this.colorBasis = (this.colorBasis || this.regl.buffer)(linspace(ndarray([], [n]), 1, 0)); // stride of 1
-  };
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.numPoints !== this.props.numPoints) {
-      this.createDatasets(this.props.numPoints);
-    }
   }
 
   // Main draw loop
@@ -88,11 +65,10 @@ export class Renderer extends Component {
       // external state
       pointRadius: this.props.radius,
       n: this.props.numPoints,
-      // internal state
-      datasets: this.datasets,
-      datasetPtr: this.datasetPtr,
-      colorBasis: this.colorBasis,
+      datasets: this.props.datasets,
+      colorBasis: this.props.colorBasis,
       // derived state
+      datasetPtr: this.datasetPtr,
       interp: ease((time - this.lastSwitchTime) / switchDuration)
     });
   };
@@ -117,6 +93,10 @@ export class Renderer extends Component {
 
   componentWillUnmount() {
     this._stop();
+  }
+
+  shouldComponentUpdate(prevProps) {
+    return false;
   }
 
   render() {

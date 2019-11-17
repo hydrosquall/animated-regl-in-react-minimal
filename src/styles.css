@@ -1,9 +1,9 @@
 .App {
-  height: 700px;
+  height: 800px;
+  text-align: center;
 }
 
-
 .reglWrapper{
-  height: 600px;
-  width: 600px;
+  height: 800px;
+  width: 800px;
 }
