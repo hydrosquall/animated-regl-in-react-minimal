@@ -12,8 +12,8 @@ import shaderFrag from "./shaderFrag.glsl";
 import shaderVertex from "./shaderVertex.glsl";
 const ease = require("eases/cubic-in-out");
 
-const switchInterval = 2;
-const switchDuration = 1;
+const switchInterval = 3;
+const switchDuration = 1.5;
 
 // renderer = instance of Renderer
 const getDrawPoints = (renderer) => {

@@ -34,7 +34,7 @@ export const ControlPanel = memo((props) => {
           // PREACT
           "p",
           null,
-          `POC of smoothly-animating-points-with-regl in create-react-app`
+          `POC of smoothly-animating-points-with-regl in create-react-app, with regl-camera (pan and zoom)`
         )
       ),
       // name: "controls-state + controls-gui Prototype", // text input!
@@ -44,8 +44,8 @@ export const ControlPanel = memo((props) => {
         // method: ControlsState.Select("RK2", {      // make an enum!
         //   options: ["Euler", "RK2", "RK4", "RK45"]
         // }),
-        radius: ControlsState.Slider(1, { min: 1, max: 40, step: 0.25 }),
-        n_points: ControlsState.Slider(500, {
+        radius: ControlsState.Slider(4.5, { min: 1, max: 40, step: 0.25 }),
+        n_points: ControlsState.Slider(20000, {
           min: 1000,
           max: 200000,
           step: 1000

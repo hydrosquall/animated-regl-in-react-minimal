@@ -1,10 +1,3 @@
-
-import linspace from "ndarray-linspace";
-import vectorFill from "ndarray-vector-fill";
-import ndarray from "ndarray";
-
-import { phyllotaxis, grid, sine, spiral } from "./datasets";
-
 // Reducer needs access to REGL instance to be able to load data into a buffer, without the caller needing to know about REGL.
 // Otherwise data processing logic will leak into the renderer.
 // Alternately, we can store the regl instance in redux!

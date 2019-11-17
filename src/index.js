@@ -25,7 +25,7 @@ const App = () => {
   const reglRef = useRef(null); // for some reason setState isn't good, maybe usecallback is better? this ref is ok for now.
 
   // In future, make reducer to store all of this state.
-  const [radius, setRadius] = useState(2); // size per point
+  const [radius, setRadius] = useState(4.5); // size per point
   const [state, dispatch] = useReducer(getReducer(reglRef.current), DEFAULT_STATE); // all this state is coupled.
 
   // The reason for putting the dom NEXT to the renderer instead of putting them together is so that the "update data"
