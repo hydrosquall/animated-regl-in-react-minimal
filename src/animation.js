@@ -46,6 +46,10 @@ export class Renderer extends Component {
     this.initDrawFunctions();
     this._start();
 
+    // Local state
+    this.datasets = [];
+    this.colorBasis = null;
+
     // Local state dealing with animation, not data.
     this.lastSwitchTime = 0;
     this.datasetPtr = 0;
@@ -58,6 +62,10 @@ export class Renderer extends Component {
 
   // Main draw loop
   _draw = (time) => {
+    if (!this.colorBasis) {
+      return;
+    }
+
     this.drawPoints({
       // external state
       pointRadius: this.props.radius,
@@ -92,9 +100,10 @@ export class Renderer extends Component {
     this._stop();
   }
 
-  shouldComponentUpdate(prevProps) {
+  shouldComponentUpdate() {
     return false;
   }
+
 
   render() {
     return null;
