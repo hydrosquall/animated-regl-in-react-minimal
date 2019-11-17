@@ -1,6 +1,6 @@
 precision mediump float;
 
-#pragma glslify: colormap = require(glsl-colormap/viridis)
+#pragma glslify: colormap = require(glsl-colormap/oxygen)
 
 varying float t;
 
