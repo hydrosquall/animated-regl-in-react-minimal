@@ -61,7 +61,6 @@ export class Renderer extends Component {
     this.datasetPtr = 0;
   }
 
-  // Might be able to remove this ini
   initDrawFunctions() {
     this.drawPoints = getDrawPoints(this);
   }
@@ -72,17 +71,19 @@ export class Renderer extends Component {
       return;
     }
 
+    // Camera provides "projection FOV matrix".
     this.props.camera(state => {
-      // if (!state.dirty) return;
       this.drawPoints({
         // external state
         pointRadius: this.props.radius,
         n: this.props.numPoints,
+
+        // Internal derived state
         datasets: this.datasets,
         colorBasis: this.colorBasis,
-        // derived state
         datasetPtr: this.datasetPtr,
-        interp: ease((time - this.lastSwitchTime) / switchDuration)
+        // Vary on every iteration
+        interp: ease((time - this.lastSwitchTime) / switchDuration) // TODO: convert division to multiplication for perf.
       });
     });
   };
@@ -109,21 +110,28 @@ export class Renderer extends Component {
     this._stop();
   }
 
+  updateDatasets() {
+    const n = this.props.numPoints;
+    this.datasets = drawFunctions.map((func, i) =>
+      (this.datasets[i] || this.regl.buffer)(
+        vectorFill(ndarray([], [n, 2]), func(n))
+      )
+    );
+    // A list from 1 to 0 for coloring:
+    this.colorBasis = (this.colorBasis || this.regl.buffer)(
+      linspace(ndarray([], [n]), 1, 0)
+    );
+  }
+
   componentDidUpdate(prevProps) {
     if (prevProps.numPoints !== this.props.numPoints) {
-      const n = this.props.numPoints;
-      this.datasets = drawFunctions.map((func, i) =>
-        (this.datasets[i] || this.regl.buffer)(
-          vectorFill(ndarray([], [n, 2]), func(n))
-        )
-      );
-      // A list from 1 to 0 for coloring:
-      this.colorBasis = (this.colorBasis || this.regl.buffer)(
-        linspace(ndarray([], [n]), 1, 0)
-      );
+      this.updateDatasets();
     }
   }
 
+  componentDidMount() {
+    this.updateDatasets();
+  }
 
   render() {
     return null;

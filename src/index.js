@@ -56,9 +56,9 @@ const App = () => {
           with putting things into an REGL buffer. However, let's discuss this API with someone else first.
           I also think based on this experiment that we could consider moving the color scale into WEBGL if all the palettes were made into pragmas...
       */}
-      {reglRef.current && (
+      {state.reglInstance && (
         <Renderer
-          regl={reglRef.current}
+          regl={state.reglInstance}
           camera={state.camera}
           numPoints={state.numPoints}
           radius={radius}

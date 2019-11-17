@@ -21,7 +21,7 @@ export function getReducer(regl) {
       case "setRegl":
         return {
           ...state,
-          regl: action.payload.regl,
+          reglInstance: action.payload.regl,
           camera: action.payload.camera
         }
 
