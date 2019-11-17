@@ -2,6 +2,12 @@
 // https://github.com/rreusser/smoothly-animating-points-with-regl
 import { Component } from 'react';
 
+import linspace from "ndarray-linspace";
+import vectorFill from "ndarray-vector-fill";
+import ndarray from "ndarray";
+
+import { phyllotaxis, grid, sine, spiral } from "./datasets";
+
 import shaderFrag from "./shaderFrag.glsl";
 import shaderVertex from "./shaderVertex.glsl";
 const ease = require("eases/cubic-in-out");
@@ -46,6 +52,10 @@ export class Renderer extends Component {
     this.initDrawFunctions();
     this._start();
 
+    // Local state
+    this.datasets = [];
+    this.colorBasis = null;
+
     // Local state dealing with animation, not data.
     this.lastSwitchTime = 0;
     this.datasetPtr = 0;
@@ -58,12 +68,16 @@ export class Renderer extends Component {
 
   // Main draw loop
   _draw = (time) => {
+    if (!this.colorBasis) {
+      return;
+    }
+
     this.drawPoints({
       // external state
       pointRadius: this.props.radius,
       n: this.props.numPoints,
-      datasets: this.props.datasets,
-      colorBasis: this.props.colorBasis,
+      datasets: this.datasets,
+      colorBasis: this.colorBasis,
       // derived state
       datasetPtr: this.datasetPtr,
       interp: ease((time - this.lastSwitchTime) / switchDuration)
@@ -92,9 +106,21 @@ export class Renderer extends Component {
     this._stop();
   }
 
-  shouldComponentUpdate(prevProps) {
-    return false;
+  componentDidUpdate(prevProps) {
+    if (prevProps.numPoints !== this.props.numPoints) {
+      const n = this.props.numPoints;
+      this.datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
+        (this.datasets[i] || this.regl.buffer)(
+          vectorFill(ndarray([], [n, 2]), func(n))
+        )
+      );
+      // A list from 1 to 0 for coloring:
+      this.colorBasis = (this.colorBasis || this.regl.buffer)(
+        linspace(ndarray([], [n]), 1, 0)
+      );
+    }
   }
+
 
   render() {
     return null;

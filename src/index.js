@@ -2,52 +2,20 @@ import React, { useEffect, useRef, useState, useReducer } from "react";
 import ReactDOM from "react-dom";
 
 import reglCreator from "regl";
-import linspace from "ndarray-linspace";
-import vectorFill from "ndarray-vector-fill";
-import ndarray from "ndarray";
 
-import { phyllotaxis, grid, sine, spiral } from "./datasets";
 import { Renderer } from "./animation";
 import { ControlPanel } from "./ControlPanel";
+import { getReducer } from './reducer';
 
 import "./styles.css";
 
 const DEFAULT_POINTS = 20000;
 
-
-// Reducer needs access to REGL insttance to be able to load data into a buffer, without the caller needing to know about REGL.
-// Otherwise data processing logic will leak into the renderer.
-// Alternately, we can store the regl instance in redux!
-function getReducer(regl) {
-  return function reducer(state, action) {
-    switch (action.type) {
-      case "setNumPoints":
-        const { n } = action.payload; // n = number of points, regl is a regl instance
-        const datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
-          (state.datasets[i] || regl.buffer)(
-            vectorFill(ndarray([], [n, 2]), func(n))
-          )
-        );
-        // A list from 1 to 0 for coloring:
-        const colorBasis = (state.colorBasis || regl.buffer)(
-          linspace(ndarray([], [n]), 1, 0)
-        );
-        return {
-          datasets,
-          colorBasis,
-          numPoints: n
-        };
-      default:
-        throw new Error();
-    }
-  }
-}
-
-
 const DEFAULT_STATE = {
   numPoints: DEFAULT_POINTS,
   datasets: [],
-  colorBasis: undefined
+  colorBasis: undefined,
+  reglInstance: null // shared
 };
 
 const App = () => {
@@ -63,11 +31,13 @@ const App = () => {
   useEffect(() => {
     reglRef.current = reglCreator({
       container: canvasRef.current,
-      attributes: { antialias: true }
-    });
-    dispatch({
-      type: "setNumPoints",
-      payload: { n: DEFAULT_POINTS }
+      attributes: { antialias: true },
+      onDone: (err, regl) => {
+        dispatch({
+          type: "setRegl",
+          payload: { regl }
+        });
+      }
     });
   }, []);
 
@@ -82,8 +52,8 @@ const App = () => {
         <Renderer
           regl={reglRef.current}
           numPoints={state.numPoints}
-          colorBasis={state.colorBasis}
-          datasets={state.datasets}
+          // colorBasis={state.colorBasis}
+          // datasets={state.datasets}
           radius={radius}
         ></Renderer>
       )}
