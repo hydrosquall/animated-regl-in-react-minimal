@@ -1,4 +1,4 @@
-import React, { createRef, useEffect } from 'react';
+import React, { createRef, useEffect, memo } from 'react';
 
 import ControlsState from "controls-state";
 import ControlsGui from "controls-gui";
@@ -23,7 +23,7 @@ function wrapGUI(state, opts) {
   return root;
 };
 
-export const ControlPanel = (props) => {
+export const ControlPanel = memo((props) => {
   const wrapperRef = createRef(null);
 
   const { setRadius, dispatch } = props;
@@ -66,15 +66,15 @@ export const ControlPanel = (props) => {
       }
     });
 
-    // In future, don't do this appendchild thing. However, it works for a prototype.
+    // In future, don't do this appendchild trick workaround. However, it's OK for a proof of concept.
     const gui = wrapGUI(controlState, {});
     if (wrapperRef.current) {
       wrapperRef.current.appendChild(gui);
     }
-  // Leaving out wrapperRef to avoid repeat running issues.
+  // Leaving out wrapperRef to avoid repeat control panel rendering issues.
   }, [setRadius, dispatch]); // shouldn't change because these come from hooks, but just in case
 
   return (<div ref={wrapperRef}></div> );
-}
+})
 
 export default ControlPanel;

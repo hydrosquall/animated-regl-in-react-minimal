@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useReducer } from "react";
 import ReactDOM from "react-dom";
 
 import reglCreator from "regl";
-
 import linspace from "ndarray-linspace";
 import vectorFill from "ndarray-vector-fill";
 import ndarray from "ndarray";
@@ -17,7 +16,8 @@ const DEFAULT_POINTS = 20000;
 
 
 // Reducer needs access to REGL insttance to be able to load data into a buffer, without the caller needing to know about REGL.
-// Otherwise data processing logic will leak
+// Otherwise data processing logic will leak into the renderer.
+// Alternately, we can store the regl instance in redux!
 function getReducer(regl) {
   return function reducer(state, action) {
     switch (action.type) {
@@ -65,7 +65,6 @@ const App = () => {
       container: canvasRef.current,
       attributes: { antialias: true }
     });
-    // Render initial batch of data
     dispatch({
       type: "setNumPoints",
       payload: { n: DEFAULT_POINTS }
@@ -88,6 +87,7 @@ const App = () => {
           radius={radius}
         ></Renderer>
       )}
+      {/* Put this ref on the outside so we can control the ordering relative to the other control panels (underlay/overlay) */}
       <div ref={canvasRef} className="reglWrapper"></div>
       <ControlPanel
         dispatch={dispatch} // Keep this generic for now, but if narrowed in the future, limit to 1 callback per slider.
