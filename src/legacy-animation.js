@@ -53,7 +53,6 @@ export function run(regl) {
     if (time - lastSwitchTime > switchInterval) {
       lastSwitchTime = time;
       datasetPtr++;
-      console.log(context);
     }
     drawPoints({ interp: ease((time - lastSwitchTime) / switchDuration) });
   });
