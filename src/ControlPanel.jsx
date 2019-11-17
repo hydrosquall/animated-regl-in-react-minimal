@@ -61,7 +61,7 @@ export const ControlPanel = (props) => {
         const n = Math.round(data["simulation.n_points"].value);
         dispatch({
           type: "setNumPoints",
-          payload: { n, regl: props.regl }
+          payload: { n }
         });
       }
     });
@@ -71,7 +71,8 @@ export const ControlPanel = (props) => {
     if (wrapperRef.current) {
       wrapperRef.current.appendChild(gui);
     }
-  }, [setRadius, dispatch, wrapperRef]); // shouldn't change because these come from hooks, but just in case
+  // Leaving out wrapperRef to avoid repeat running issues.
+  }, [setRadius, dispatch]); // shouldn't change because these come from hooks, but just in case
 
   return (<div ref={wrapperRef}></div> );
 }

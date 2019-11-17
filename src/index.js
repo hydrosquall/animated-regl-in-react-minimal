@@ -15,28 +15,34 @@ import "./styles.css";
 
 const DEFAULT_POINTS = 20000;
 
-function reducer(state, action) {
-  switch (action.type) {
-    case "setNumPoints":
-      const { n, regl } = action.payload; // n = number of points, regl is a regl instance
-      const datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
-        (state.datasets[i] || regl.buffer)(
-          vectorFill(ndarray([], [n, 2]), func(n))
-        )
-      );
-      // A list from 1 to 0 for coloring:
-      const colorBasis = (state.colorBasis || regl.buffer)(
-        linspace(ndarray([], [n]), 1, 0)
-      );
-      return {
-        datasets,
-        colorBasis,
-        numPoints: n
-      };
-    default:
-      throw new Error();
+
+// Reducer needs access to REGL insttance to be able to load data into a buffer, without the caller needing to know about REGL.
+// Otherwise data processing logic will leak
+function getReducer(regl) {
+  return function reducer(state, action) {
+    switch (action.type) {
+      case "setNumPoints":
+        const { n } = action.payload; // n = number of points, regl is a regl instance
+        const datasets = [phyllotaxis, grid, sine, spiral].map((func, i) =>
+          (state.datasets[i] || regl.buffer)(
+            vectorFill(ndarray([], [n, 2]), func(n))
+          )
+        );
+        // A list from 1 to 0 for coloring:
+        const colorBasis = (state.colorBasis || regl.buffer)(
+          linspace(ndarray([], [n]), 1, 0)
+        );
+        return {
+          datasets,
+          colorBasis,
+          numPoints: n
+        };
+      default:
+        throw new Error();
+    }
   }
 }
+
 
 const DEFAULT_STATE = {
   numPoints: DEFAULT_POINTS,
@@ -50,7 +56,7 @@ const App = () => {
 
   // In future, make reducer to store all of this state.
   const [radius, setRadius] = useState(2); // size per point
-  const [state, dispatch] = useReducer(reducer, DEFAULT_STATE); // all this state is coupled.
+  const [state, dispatch] = useReducer(getReducer(reglRef.current), DEFAULT_STATE); // all this state is coupled.
 
   // The reason for putting the dom NEXT to the renderer instead of putting them together is so that the "update data"
   // method would get access to the "regl" buffer. However, I'm not sure if that's necessary... try to clean it up tomorrow.
@@ -62,7 +68,7 @@ const App = () => {
     // Render initial batch of data
     dispatch({
       type: "setNumPoints",
-      payload: { n: DEFAULT_POINTS, regl: reglRef.current }
+      payload: { n: DEFAULT_POINTS }
     });
   }, []);
 
@@ -86,7 +92,6 @@ const App = () => {
       <ControlPanel
         dispatch={dispatch} // Keep this generic for now, but if narrowed in the future, limit to 1 callback per slider.
         setRadius={setRadius}
-        regl={reglRef.current}
       ></ControlPanel>
     </div>
   );
